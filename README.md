@@ -1,5 +1,5 @@
-# ktg-mes-ui
+# stig-mes-ui
 
 #### 介绍
-开源、免费MES系统的前端
+STIG-MES系统的前端
 
