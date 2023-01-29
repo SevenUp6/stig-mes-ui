@@ -35,6 +35,16 @@
           @click="toggleExpandAll"
         >展开/折叠</el-button>
       </el-col>
+<!--      <el-col :span="1.5">-->
+<!--        <el-button-->
+<!--          type="info"-->
+<!--          plain-->
+<!--          icon="el-icon-upload2"-->
+<!--          size="mini"-->
+<!--          @click="handleImport"-->
+<!--          v-hasPermi="['mes:md:itemtype:import']"-->
+<!--        >导入</el-button>-->
+<!--      </el-col>-->
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -48,12 +58,12 @@
     >
       <el-table-column prop="itemTypeName" label="分类" width="260"></el-table-column>
       <el-table-column prop="orderNum" label="排序" width="200"></el-table-column>
-      <el-table-column prop="itemOrProduct" label="物料/产品" width="200">
-        <template slot-scope="scope">
-          <dict-tag :options="dict.type.mes_item_product" :value="scope.row.itemOrProduct"/>
-        </template>
-      </el-table-column>
-      
+<!--      <el-table-column prop="itemOrProduct" label="物料/产品" width="200">-->
+<!--        <template slot-scope="scope">-->
+<!--          <dict-tag :options="dict.type.mes_item_product" :value="scope.row.itemOrProduct"/>-->
+<!--        </template>-->
+<!--      </el-table-column>-->
+
       <el-table-column prop="enableFlag" label="是否启用" width="100">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.enableFlag"/>
@@ -94,7 +104,7 @@
 
     <!-- 添加或修改物料分类对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">      
+      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-row>
           <el-col :span="24" v-if="form.parentTypeId !== 0">
             <el-form-item label="父分类" prop="parentTypeId">
@@ -114,19 +124,19 @@
             </el-form-item>
           </el-col>
         </el-row>
-        
+
         <el-row>
-          <el-col :span="12">
-            <el-form-item label="物料/产品">
-              <el-radio-group v-model="form.itemOrProduct">
-                <el-radio
-                  v-for="dict in dict.type.mes_item_product"
-                  :key="dict.value"
-                  :label="dict.value"
-                >{{dict.label}}</el-radio>
-              </el-radio-group>
-            </el-form-item>
-          </el-col>
+<!--          <el-col :span="12">-->
+<!--            <el-form-item label="物料/产品">-->
+<!--              <el-radio-group v-model="form.itemOrProduct">-->
+<!--                <el-radio-->
+<!--                  v-for="dict in dict.type.mes_item_product"-->
+<!--                  :key="dict.value"-->
+<!--                  :label="dict.value"-->
+<!--                >{{dict.label}}</el-radio>-->
+<!--              </el-radio-group>-->
+<!--            </el-form-item>-->
+<!--          </el-col>-->
           <el-col :span="12">
             <el-form-item label="启用状态">
               <el-radio-group v-model="form.enableFlag">
@@ -145,11 +155,41 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+    <!-- 物料导入对话框 -->
+    <el-dialog :title="upload.title" :visible.sync="upload.open" width="400px" append-to-body>
+      <el-upload
+        ref="upload"
+        :limit="1"
+        accept=".xlsx, .xls"
+        :headers="upload.headers"
+        :action="upload.url + '?updateSupport=' + upload.updateSupport"
+        :disabled="upload.isUploading"
+        :on-progress="handleFileUploadProgress"
+        :on-success="handleFileSuccess"
+        :auto-upload="false"
+        drag
+      >
+        <i class="el-icon-upload"></i>
+        <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+        <div class="el-upload__tip text-center" slot="tip">
+          <div class="el-upload__tip" slot="tip">
+            <el-checkbox v-model="upload.updateSupport" /> 是否更新已经存在的用户数据
+          </div>
+          <span>仅允许导入xls、xlsx格式文件。</span>
+          <el-link type="primary" :underline="false" style="font-size:12px;vertical-align: baseline;" @click="importTemplate">下载模板</el-link>
+        </div>
+      </el-upload>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitFileForm">确 定</el-button>
+        <el-button @click="upload.open = false">取 消</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { listItemType, getItemType, delItemType, addItemType, updateItemType, listItemTypeExcludeChild } from "@/api/mes/md/itemtype";
+import { getToken } from "@/utils/auth";
 import Treeselect from "@riophae/vue-treeselect";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 
@@ -195,12 +235,27 @@ export default {
         ],
         itemOrProduct: [
           {
-            required: true,
+            required: false,
             message: "请选择是产品分类还是物料分类",
             trigger: ["blur"]
           }
         ]
-      }
+      },
+      // 用户导入参数
+      upload: {
+        // 是否显示弹出层（用户导入）
+        open: false,
+        // 弹出层标题（用户导入）
+        title: "",
+        // 是否禁用上传
+        isUploading: false,
+        // 是否更新已经存在的用户数据
+        updateSupport: 0,
+        // 设置上传的请求头部
+        headers: { Authorization: "Bearer " + getToken() },
+        // 上传的地址
+        url: process.env.VUE_APP_BASE_API + "/mes/md/mditem/importData"
+      },
     };
   },
   created() {
@@ -211,7 +266,6 @@ export default {
     getList() {
       this.loading = true;
       listItemType(this.queryParams).then(response => {
-        debugger;
         var types = this.handleTree(response.data, "itemTypeId","parentTypeId");
         this.itemTypeList = types;
         this.loading = false;
@@ -267,6 +321,31 @@ export default {
         this.itemTypeOptions = this.handleTree(response.data, "itemTypeId","parentTypeId");
       });
     },
+    /** 导入按钮操作 */
+    handleImport() {
+      this.upload.title = "物料/产品导入";
+      this.upload.open = true;
+    },
+    /** 下载模板操作 */
+    importTemplate() {
+      this.download('mes/md/mditem/importTemplate', {
+      }, `md_item_${new Date().getTime()}.xlsx`)
+    },
+    // 文件上传中处理
+    handleFileUploadProgress(event, file, fileList) {
+      this.upload.isUploading = true;
+    },
+    // 文件上传成功处理
+    handleFileSuccess(response, file, fileList) {
+      this.upload.open = false;
+      this.upload.isUploading = false;
+      this.$refs.upload.clearFiles();
+      this.$alert("<div style='overflow: auto;overflow-x: hidden;max-height: 70vh;padding: 10px 20px 0;'>" + response.msg + "</div>", "导入结果", { dangerouslyUseHTMLString: true });
+      this.getList();
+    },
+    submitFileForm() {
+      this.$refs.upload.submit();
+    },
     /** 展开/折叠操作 */
     toggleExpandAll() {
       this.refreshTable = false;
@@ -297,7 +376,7 @@ export default {
               this.open = false;
               this.getList();
             });
-          } else {            
+          } else {
             addItemType(this.form).then(response => {
               this.$modal.msgSuccess("新增成功");
               this.open = false;

@@ -227,7 +227,6 @@ export default {
     getList() {
       this.loading = true;
       listDept(this.queryParams).then(response => {
-        debugger;
         var depts = this.handleTree(response.data, "deptId");
         this.deptList = depts;
         this.loading = false;
