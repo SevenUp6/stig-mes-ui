@@ -35,16 +35,16 @@ module.exports = {
     proxy: {
       // detail: https://cli.vuejs.org/config/#devserver-proxy
       [process.env.VUE_APP_BASE_API]: {
-        target: 'http://localhost:2929',
-        // target: 'http://8.142.92.214:2929',
+        // target: 'http://localhost:2929',
+        target: 'http://192.168.10.136:2929',
         changeOrigin: true,
         pathRewrite: {
           ['^' + process.env.VUE_APP_BASE_API]: ''
         }
       },
       '/ureport': {
-        // target: 'http://8.142.92.214:2929',
-        target: 'http://localhost:2929',
+        target: 'http://192.168.10.136:2929',
+        // target: 'http://localhost:2929',
         ws:false,
         changeOrigin: true,
         pathRewrite: {
