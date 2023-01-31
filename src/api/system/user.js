@@ -125,3 +125,11 @@ export function updateAuthRole(data) {
     params: data
   })
 }
+
+// 同步钉钉信息
+export function getalluser(data) {
+  return request({
+    url: '/dingtalk/getalluser',
+    method: 'get',
+  })
+}

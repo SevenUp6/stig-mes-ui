@@ -62,7 +62,7 @@
                 <template v-slot="scope">
                     <el-radio v-model="selectedId" :label="scope.row.userId" @change="handleRowChange(scope.row)">{{""}}</el-radio>
                 </template>
-            </el-table-column>          
+            </el-table-column>
           <el-table-column label="用户名称" align="center" key="userName" prop="userName" v-if="columns[1].visible" :show-overflow-tooltip="true" />
           <el-table-column label="用户昵称" align="center" key="nickName" prop="nickName" v-if="columns[2].visible" :show-overflow-tooltip="true" />
           <el-table-column label="部门" align="center" key="deptName" prop="dept.deptName" v-if="columns[3].visible" :show-overflow-tooltip="true" />
@@ -81,7 +81,7 @@
             <template slot-scope="scope">
               <span>{{ parseTime(scope.row.createTime) }}</span>
             </template>
-          </el-table-column>         
+          </el-table-column>
         </el-table>
 
         <pagination
@@ -195,7 +195,6 @@ export default {
     /** 查询部门下拉树结构 */
     getTreeselect() {
       treeselect().then(response => {
-        debugger;
         this.deptOptions = response.data;
       });
     },

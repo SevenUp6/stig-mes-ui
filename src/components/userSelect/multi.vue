@@ -78,7 +78,7 @@
             <template slot-scope="scope">
               <span>{{ parseTime(scope.row.createTime) }}</span>
             </template>
-          </el-table-column>         
+          </el-table-column>
         </el-table>
 
         <pagination
@@ -192,7 +192,6 @@ export default {
     /** 查询部门下拉树结构 */
     getTreeselect() {
       treeselect().then(response => {
-        debugger;
         this.deptOptions = response.data;
       });
     },

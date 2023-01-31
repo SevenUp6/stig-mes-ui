@@ -109,27 +109,39 @@
               :disabled="multiple"
               @click="handleDelete"
               v-hasPermi="['system:user:remove']"
-            >删除</el-button>
+            >删除
+            </el-button>
           </el-col>
+          <!--          <el-col :span="1.5">-->
+          <!--            <el-button-->
+          <!--              type="info"-->
+          <!--              plain-->
+          <!--              icon="el-icon-upload2"-->
+          <!--              size="mini"-->
+          <!--              @click="handleImport"-->
+          <!--              v-hasPermi="['system:user:import']"-->
+          <!--            >导入</el-button>-->
+          <!--          </el-col>-->
+          <!--          <el-col :span="1.5">-->
+          <!--            <el-button-->
+          <!--              type="warning"-->
+          <!--              plain-->
+          <!--              icon="el-icon-download"-->
+          <!--              size="mini"-->
+          <!--              @click="handleExport"-->
+          <!--              v-hasPermi="['system:user:export']"-->
+          <!--            >导出</el-button>-->
+          <!--      </el-col>-->
           <el-col :span="1.5">
             <el-button
               type="info"
               plain
-              icon="el-icon-upload2"
+              icon="el-icon-refresh"
               size="mini"
-              @click="handleImport"
-              v-hasPermi="['system:user:import']"
-            >导入</el-button>
-          </el-col>
-          <el-col :span="1.5">
-            <el-button
-              type="warning"
-              plain
-              icon="el-icon-download"
-              size="mini"
-              @click="handleExport"
-              v-hasPermi="['system:user:export']"
-            >导出</el-button>
+              @click="handleSync"
+              :loading="syncBtnStatus"
+            >同步钉钉信息
+            </el-button>
           </el-col>
           <right-toolbar :showSearch.sync="showSearch" @queryTable="getList" :columns="columns"></right-toolbar>
         </el-row>
@@ -341,16 +353,17 @@
 </template>
 
 <script>
-import { listUser, getUser, delUser, addUser, updateUser, resetUserPwd, changeUserStatus } from "@/api/system/user";
-import { getToken } from "@/utils/auth";
-import { treeselect } from "@/api/system/dept";
+import {addUser, changeUserStatus, delUser, getUser, listUser, resetUserPwd, updateUser} from "@/api/system/user";
+import {getToken} from "@/utils/auth";
+import {treeselect} from "@/api/system/dept";
 import Treeselect from "@riophae/vue-treeselect";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
+import {getalluser} from "../../../api/system/user";
 
 export default {
   name: "User",
   dicts: ['sys_normal_disable', 'sys_user_sex'],
-  components: { Treeselect },
+  components: {Treeselect},
   data() {
     return {
       // 遮罩层
@@ -404,6 +417,7 @@ export default {
         // 上传的地址
         url: process.env.VUE_APP_BASE_API + "/system/user/importData"
       },
+      syncBtnStatus:false,
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -480,7 +494,6 @@ export default {
     /** 查询部门下拉树结构 */
     getTreeselect() {
       treeselect().then(response => {
-        debugger;
         this.deptOptions = response.data;
       });
     },
@@ -646,10 +659,18 @@ export default {
       this.upload.title = "用户导入";
       this.upload.open = true;
     },
+    /** 导入按钮操作 */
+    handleSync() {
+      this.syncBtnStatus = true
+      getalluser().then(response => {
+        this.syncBtnStatus = false
+        this.$modal.msgSuccess("同步成功");
+        this.getList();
+      });
+    },
     /** 下载模板操作 */
     importTemplate() {
-      this.download('system/user/importTemplate', {
-      }, `user_template_${new Date().getTime()}.xlsx`)
+      this.download('system/user/importTemplate', {}, `user_template_${new Date().getTime()}.xlsx`)
     },
     // 文件上传中处理
     handleFileUploadProgress(event, file, fileList) {
@@ -660,13 +681,14 @@ export default {
       this.upload.open = false;
       this.upload.isUploading = false;
       this.$refs.upload.clearFiles();
-      this.$alert("<div style='overflow: auto;overflow-x: hidden;max-height: 70vh;padding: 10px 20px 0;'>" + response.msg + "</div>", "导入结果", { dangerouslyUseHTMLString: true });
+      this.$alert("<div style='overflow: auto;overflow-x: hidden;max-height: 70vh;padding: 10px 20px 0;'>" + response.msg + "</div>", "导入结果", {dangerouslyUseHTMLString: true});
       this.getList();
     },
     // 提交上传文件
     submitFileForm() {
       this.$refs.upload.submit();
-    }
+    },
+
   }
 };
 </script>
